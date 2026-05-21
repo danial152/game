@@ -14,6 +14,8 @@ colors = {
     "RED": (255, 50, 50)
 }
 
+bat_img = pygame.image.load("bat.png")
+bat_img = pygame.transform.scale(bat_img, (50,50))
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -104,10 +106,9 @@ class Platform(pygame.sprite.Sprite):
 class Eye(pygame.sprite.Sprite):
     def __init__(self, x, y, target):
         super().__init__()
-        self.width = 20
-        self.height = 20
-        self.image = pygame.Surface((self.width, self.height))
-        self.image.fill(random.choice(list(colors.values())))
+        self.width = 50
+        self.height = 50
+        self.image = bat_img
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
