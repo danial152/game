@@ -95,12 +95,38 @@ class Platform(pygame.sprite.Sprite):
         self.change_y = 3
     def update(self):
         self.rect.y += self.change_y
-
     def spawn():
-        width = random.randint(100,200)
-        x = random.randint(0,800-width)
+        width = random.randint(30,200)
+        x = random.randint(100,600-width)
         height = random.randint(10,50)
         return Platform(x, 0, width, height)
+
+class Eye(pygame.sprite.Sprite):
+    def __init__(self, x, y, target):
+        super().__init__()
+        self.width = 20
+        self.height = 20
+        self.image = pygame.Surface((self.width, self.height))
+        self.image.fill(random.choice(list(colors.values())))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.target = target
+        self.speed = 5
+    def update(self):
+        if self.target:
+            vect = pygame.math.Vector2(self.target.rect.x - self.rect.x, self.target.rect.y - self.rect.y)
+            vect.normalize()
+            vect.scale_to_length(self.speed)
+            self.rect.move_ip(vect)
+            if pygame.sprite.collide_rect(self, self.target):
+                if self.target.dash_frames > 0:
+                    self.kill()
+                    self.target = None
+                    self.rect.x = -1000
+                else:
+                    self.target.kill()
+                    self.target = None
 
 # main game
 class Game:
@@ -119,16 +145,18 @@ class Game:
 
         #init
         self.player = Player(400, 0)
-
+        self.eye = Eye(100,0, self.player)
         self.platforms = pygame.sprite.Group()
-        self.platform = Platform(300, 50, 200, 10)
+        self.platform = Platform(300, 100, 200, 10)
         self.platforms.add(self.platform)
 
         self.all_sprites = pygame.sprite.Group()
-        self.all_sprites.add(self.player, self.platform)
+        self.all_sprites.add(self.player, self.platform,self.eye)
 
         self.SPAWN_EVENT = pygame.USEREVENT + 1
+        self.SPAWN_ENEMY_EVENT = pygame.USEREVENT + 2
         pygame.time.set_timer(self.SPAWN_EVENT, 1000)
+        pygame.time.set_timer(self.SPAWN_ENEMY_EVENT, 5000)
 
     def run(self):
         while self.running:
@@ -153,6 +181,9 @@ class Game:
                 self.platform = Platform.spawn()
                 self.platforms.add(self.platform)
                 self.all_sprites.add(self.platform)
+            if event.type == self.SPAWN_ENEMY_EVENT and self.state == "PLAY":
+                self.eye = Eye(random.randint(0,800),-100, self.player)
+                self.all_sprites.add(self.eye)
 
     def handle_menu_events(self, event):
         if event.key == pygame.K_UP:
@@ -171,7 +202,8 @@ class Game:
         if event.key == pygame.K_w:
             self.player.jump()
         if event.key == pygame.K_LSHIFT:
-            self.player.dash()
+            if self.player.recovery_frames == 0:
+                self.player.dash()
         elif event.key == pygame.K_ESCAPE:
                 self.state = "MENU"
     def update(self):
@@ -207,6 +239,7 @@ class Game:
         # Render all entities
         self.player.update(self.platforms)
         self.platforms.update()
+        self.eye.update()
         for platform in list(self.platforms):
             if platform.rect.top > SCREEN_HEIGHT:
                 platform.kill()
