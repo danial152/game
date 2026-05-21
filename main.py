@@ -191,9 +191,9 @@ class Game:
                 self.all_sprites.add(self.eye)
 
     def handle_menu_events(self, event):
-        if event.key == pygame.K_UP:
+        if event.key == pygame.K_w:
             self.menu_index = (self.menu_index - 1) % 2
-        elif event.key == pygame.K_DOWN:
+        elif event.key == pygame.K_s:
             self.menu_index = (self.menu_index + 1) % 2
         elif event.key == pygame.K_RETURN:
             if self.menu_index == 0:
@@ -242,7 +242,7 @@ class Game:
             try:
                 with open("save_file.json", "r") as file:
                     data = json.load(file)
-                    info_text2 = self.small_font.render(f"Your high score - {data.get("high_score")}", True, colors["WHITE"])
+                    info_text2 = self.small_font.render(f"Your last score - {data.get("high_score")}", True, colors["WHITE"])
             except (json.JSONDecodeError, IOError):
                 return 0
         self.screen.blit(info_text2, (SCREEN_WIDTH / 2 - info_text2.get_width() / 2, 270))
