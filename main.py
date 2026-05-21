@@ -47,7 +47,8 @@ class Player(pygame.sprite.Sprite):
             self.gravity = 0
         if self.dash_frames == 0:
             self.gravity = 0.7
-
+        if self.rect.y > SCREEN_HEIGHT:
+            self.dead = 1
         if self.recovery_frames == 0:
             self.image.fill(colors["RED"])
         else:
