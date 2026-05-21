@@ -1,7 +1,8 @@
 import pygame
 import sys
 import random
-
+import os
+import json
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 60
@@ -33,6 +34,7 @@ class Player(pygame.sprite.Sprite):
         self.is_grounded = False
         self.dash_frames = 0
         self.recovery_frames = 0
+        self.dead = 0
         # right or left
         self.dash_direction = "right"
     def update(self, platforms):
@@ -126,8 +128,10 @@ class Eye(pygame.sprite.Sprite):
                     self.target = None
                     self.rect.x = -1000
                 else:
+                    self.target.dead = 1
                     self.target.kill()
                     self.target = None
+
 
 # main game
 class Game:
@@ -231,10 +235,16 @@ class Game:
         title_text = self.font.render("SETTINGS", True, colors["WHITE"])
         self.screen.blit(title_text, (SCREEN_WIDTH / 2 - title_text.get_width() / 2, 100))
 
-        info_text = self.small_font.render("placeholder", True, colors["WHITE"])
+        info_text = self.small_font.render("W, A, D for movement. SHIFT for enemy-killing dash", True, colors["WHITE"])
         self.screen.blit(info_text, (SCREEN_WIDTH / 2 - info_text.get_width() / 2, 220))
-
-        info_text2 = self.small_font.render("placeholder", True, colors["WHITE"])
+        info_text2 = self.small_font.render("Your score will be here!", True, colors["WHITE"])
+        if os.path.exists("save_file.json"):
+            try:
+                with open("save_file.json", "r") as file:
+                    data = json.load(file)
+                    info_text2 = self.small_font.render(f"Your high score - {data.get("high_score")}", True, colors["WHITE"])
+            except (json.JSONDecodeError, IOError):
+                return 0
         self.screen.blit(info_text2, (SCREEN_WIDTH / 2 - info_text2.get_width() / 2, 270))
     def play(self):
         # Render all entities
@@ -242,7 +252,7 @@ class Game:
         self.platforms.update()
         self.eye.update()
         for platform in list(self.platforms):
-            if platform.rect.top > SCREEN_HEIGHT:
+            if platform.rect.top > SCREEN_HEIGHT and self.player.dead == 0:
                 platform.kill()
                 self.player_score += 1
         pressed = pygame.key.get_pressed()
@@ -257,6 +267,16 @@ class Game:
         self.all_sprites.draw(self.screen)
         esc_text = self.small_font.render(f"Your score is {self.player_score}" , True, colors["WHITE"])
         self.screen.blit(esc_text, (10, 10))
+        if self.player.dead == 1:
+            game_over_text = self.font.render(f"Game Over! Your score is saved as {self.player_score}", True,
+                                              colors["WHITE"])
+            self.screen.blit(game_over_text, (SCREEN_WIDTH / 2 - game_over_text.get_width() / 2, 350))
+            try:
+                with open("save_file.json",  "w") as file:
+                    json.dump({"high_score": self.player_score}, file,indent=4)
+            except IOError:
+                print("error writing save_file.json")
 
 
+##
 Game().run()
